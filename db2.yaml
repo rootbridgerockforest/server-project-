@@ -1,0 +1,65 @@
+---
+- hosts: databaseservers2
+  remote_user: ansible
+  become: yes
+
+  tasks: 
+    - name: install lamp stack
+      yum:  
+        pkg:
+          - epel-release
+          - httpd
+          - mariadb
+          - mariadb-server
+          - php
+          - php-mysql
+        state: latest
+        update_cache: yes
+   
+    - name: install phpMyAdmin
+      yum:
+        name: phpmyadmin
+        state: latest
+
+    - name: start apache service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: start mariadb service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: create target directory
+      file: path=/var/www/html state=directory mode=0755
+
+    - name: deploy index.html
+      become: yes
+      become_user: root
+      copy:
+        src: /ansible/templates/index2.html.j2
+        dest: /var/www/html/index.html
+
+    - name: deploy test.php
+      become: yes
+      become_user: root
+      copy:
+        src: /ansible/templates/test.php.j2
+        dest: /var/www/html/test.php
+
+    - name: deploy phpMyAdmin.conf
+      become: yes
+      become_user: root
+      copy:
+        src: /ansible/templates/phpMyAdmin2.conf.j2
+        dest: /etc/httpd/conf.d/phpMyAdmin.conf
+
+
+    - name: restart httpd service
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
